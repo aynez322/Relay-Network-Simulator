@@ -1,0 +1,220 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{tocloft}
+\usepackage{listings}
+
+\setlength{\cftbeforefigskip}{0pt}
+\lstset{
+  basicstyle=\ttfamily\small,
+  language=Python,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{teal},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray}
+}
+
+\title{Relay Network Simulator\\Documentatie Tehnica}
+\author{}
+\date{}
+
+\begin{document}
+
+\pagenumbering{gobble}
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\LARGE \textbf{Relay Network Simulator}\par}
+  \vspace{0.6em}
+  {\Large Documentatie Tehnica\par}
+  \vspace{0.8em}
+  {\color{gray}\rule{0.7\textwidth}{0.6pt}}\par
+  \vspace{2em}
+  \begin{tabular}{rl}
+    \textbf{Autor:} & Jalbă Simion \\
+    \textbf{Materie:} & Rețele de calculatoare \\
+    \textbf{Universitate:} & UTCN \\
+    \textbf{Facultate:} & Automatică si Calculatoare \\
+  \end{tabular}
+  \vfill
+  {\color{gray}\rule{0.5\textwidth}{0.4pt}}\par
+  \vspace*{0.8cm}
+\end{titlepage}
+
+\clearpage
+\pagenumbering{roman}
+\tableofcontents
+{\small
+\listoffigures
+}
+\clearpage
+\pagenumbering{arabic}
+
+\section{Introducere}
+Acest document descrie proiectul Relay Network Simulator, un simulator de propagare a mesajelor in retele distribuite. Proiectul urmareste compararea a doua protocoale de diseminare (Flooding si Gossip) in diferite topologii, cu si fara pierderi de pachete.
+
+\section{Obiective}
+\begin{itemize}
+  \item Modelarea retelei ca graf si simularea propagarii mesajelor.
+  \item Evaluarea compromisului dintre acoperire si overhead.
+  \item Generarea de rezultate reproductibile prin seed-uri controlate.
+\end{itemize}
+
+\section{Structura proiectului}
+Proiectul este organizat modular:
+\begin{itemize}
+  \item \textbf{config}: parametri globali si configurari.
+  \item \textbf{experiments}: scenarii si rularea experimentelor.
+  \item \textbf{metrics}: colectare si agregare rezultate.
+  \item \textbf{network}: modelul de graf si elementele de baza.
+  \item \textbf{protocols}: implementari Flooding si Gossip.
+  \item \textbf{simulation}: motorul de simulare si scheduler.
+  \item \textbf{visualization}: grafice si vizualizari.
+\end{itemize}
+
+\section{Arhitectura si flux de date}
+Simularea este orchestrata din \texttt{main.py}. Fiecare experiment construieste o topologie, ruleaza simularea pentru un protocol si colecteaza metrici. Rezultatele sunt salvate in CSV si vizualizari PNG.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment1_topology.png}
+  \caption{Exemplu de topologie generata pentru simulare.}
+\end{figure}
+
+\section{Modelul de simulare}
+Reteaua este reprezentata ca graf (NetworkX). Simulatorul foloseste un scheduler de evenimente discrete pentru a simula transmiterea mesajelor intre noduri. Se pot introduce pierderi de pachete prin parametrul \texttt{loss\_rate}.
+
+\begin{lstlisting}
+python main.py --experiment all --seed 42
+\end{lstlisting}
+
+\begin{lstlisting}
+sim_cfg = SimulationConfig(loss_rate=loss_rate, seed=seed)
+sim = RelayNetworkSimulator(graph=graph, protocol=protocol, config=sim_cfg)
+result = sim.run(source_id=0)
+\end{lstlisting}
+
+\section{Protocoale}
+\subsection{Flooding}
+Fiecare nod retransmite mesajul catre toti vecinii sai. Asigura acoperire ridicata, dar produce overhead mare.
+
+\subsection{Gossip}
+Fiecare nod retransmite mesajul catre un subset aleator de vecini (parametrul \texttt{k}). Reduce overhead-ul, dar poate reduce acoperirea.
+
+\begin{lstlisting}
+protocol = FloodingProtocol() if protocol_name == "flooding" else GossipProtocol(k=2)
+\end{lstlisting}
+
+\begin{lstlisting}
+graph = TopologyBuilder.create(
+  topology,
+  node_count=node_count,
+  seed=seed,
+  **topology_kwargs,
+)
+\end{lstlisting}
+
+\section{Experimente}
+\subsection{Experiment 1: Comparatie protocol fara packet loss}
+Comparatie directa intre Flooding si Gossip in topologii random si small-world.
+
+\subsection{Experiment 2: Sweep de pierderi}
+Se variaza \texttt{loss\_rate} si se observa impactul asupra delivery ratio.
+
+\subsection{Experiment 3: Scalare dupa numar de noduri}
+Se analizeaza performanta pentru retele de 50, 100 si 500 de noduri.
+
+\subsection{Experiment 4: Topologii rare vs dense}
+Se compara protocoalele pentru grafuri random cu densitate mica si mare.
+
+\begin{lstlisting}
+for protocol_name in ("flooding", "gossip"):
+    for density_label, edge_probability in density_map.items():
+        record = _run_single(
+            protocol_name=protocol_name,
+            topology="random",
+            node_count=cfg.default_node_count,
+            loss_rate=0.1,
+            seed=run_seed,
+            topology_kwargs={"edge_probability": edge_probability},
+        )
+\end{lstlisting}
+
+\begin{lstlisting}
+ChartBuilder.packet_loss_curve(
+    df,
+    "delivery_ratio",
+    cfg.results_plots_dir / "experiment2_packet_loss_delivery.png",
+    "Experiment 2: Delivery Ratio",
+)
+\end{lstlisting}
+
+\section{Metrici}
+Metricile principale colectate sunt:
+\begin{itemize}
+  \item \texttt{delivery\_ratio}
+  \item \texttt{network\_overhead}
+  \item \texttt{total\_transmissions}
+  \item \texttt{avg\_hop}, \texttt{avg\_delay}
+  \item \texttt{loss\_impact}
+\end{itemize}
+
+\begin{lstlisting}
+return {
+  "delivery_ratio": delivery_ratio,
+  "total_transmissions": float(self.total_transmissions),
+  "redundant_messages": float(self.redundant_messages),
+  "avg_hop": avg_hop,
+  "avg_delay": avg_delay,
+  "network_overhead": overhead,
+  "loss_impact": loss_impact,
+  "unique_receivers": float(unique_receivers),
+}
+\end{lstlisting}
+
+\section{Rezultate si grafice}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment1_delivery_ratio.png}
+  \caption{Delivery ratio pentru Flooding vs Gossip (Experiment 1).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment1_overhead.png}
+  \caption{Network overhead pentru Flooding vs Gossip (Experiment 1).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment2_packet_loss_delivery.png}
+  \caption{Impactul pierderilor asupra delivery ratio (Experiment 2).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment3_transmissions.png}
+  \caption{Total transmissions pentru dimensiuni de retea diferite (Experiment 3).}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment4_overhead.png}
+  \caption{Overhead in topologii rare vs dense (Experiment 4).}
+\end{figure}
+
+\section{Concluzii}
+Simulatorul evidentiaza compromisurile intre acoperire si costul de comunicare. Flooding obtine, in general, delivery ratio mai mare, dar cu overhead ridicat. Gossip reduce overhead-ul, dar poate pierde acoperire, mai ales la pierderi mari.
+
+\end{document}

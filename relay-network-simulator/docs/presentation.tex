@@ -1,0 +1,167 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{teal},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray}
+}
+
+\title{Relay Network Simulator}
+\subtitle{Simulare si comparare protocoale de diseminare}
+\author{Nume Autor}
+\institute{Facultate / Curs}
+\date{Mai 9, 2026}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Agenda}
+  \begin{itemize}
+    \item Problema si context
+    \item Arhitectura proiectului
+    \item Modelul de simulare
+    \item Protocoale: Flooding si Gossip
+    \item Experimente si scenarii
+    \item Metrici si rezultate
+    \item Limitari si viitoare imbunatatiri
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Problema si context}
+  \begin{itemize}
+    \item In retele distribuite, mesajele trebuie propagate rapid si eficient.
+    \item Exista compromis intre acoperire (delivery ratio) si overhead.
+    \item Proiectul simuleaza diferite topologii si protocoale.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Arhitectura proiectului}
+  \begin{itemize}
+    \item Modular: config, experiments, metrics, network, protocols, simulation, visualization.
+    \item Intrare: \texttt{main.py} ruleaza experimentele.
+    \item Iesire: CSV + grafice in \texttt{results/}.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment1_topology.png}
+  \end{center}
+  \small Exemplu de topologie generata in simulare.
+\end{frame}
+
+\begin{frame}{Modelul de simulare}
+  \begin{itemize}
+    \item Retea modelata ca graf (NetworkX).
+    \item Simulator cu evenimente discrete si scheduler.
+    \item Packet loss optional, controlat prin parametri.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment2_packet_loss_delivery.png}
+  \end{center}
+  \small Impactul packet loss asupra acoperirii.
+\end{frame}
+
+\begin{frame}{Snippet: Rulare experimente}
+  \begin{lstlisting}
+python main.py --experiment all --seed 42
+  \end{lstlisting}
+  \vspace{0.5em}
+  \small Comanda ruleaza toate cele patru experimente cu seed fix.
+\end{frame}
+
+\begin{frame}{Protocoale: Flooding vs Gossip}
+  \begin{itemize}
+    \item Flooding: trimite catre toti vecinii.
+    \item Gossip: trimite catre un subset aleator (parametru k).
+    \item Obiectiv: compararea acoperirii cu overhead.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment1_delivery_ratio.png}
+  \end{center}
+  \small Comparatie delivery\_ratio intre protocoale.
+\end{frame}
+
+\begin{frame}{Snippet: selectie protocol}
+  \begin{lstlisting}
+protocol = FloodingProtocol() if protocol_name == "flooding" else GossipProtocol(k=2)
+  \end{lstlisting}
+  \vspace{0.5em}
+  \small Selectia protocolului in functie de scenariu.
+\end{frame}
+
+\begin{frame}{Scenarii experimentale}
+  \begin{itemize}
+    \item Experiment 1: Comparatie protocol, fara packet loss.
+    \item Experiment 2: Sweep pentru rate de pierdere.
+    \item Experiment 3: Scalare dupa numar de noduri.
+    \item Experiment 4: Topologii rare vs dense.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Metrici colectate}
+  \begin{itemize}
+    \item delivery\_ratio
+    \item network\_overhead
+    \item total\_transmissions
+    \item avg\_hop, avg\_delay
+    \item loss\_impact
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment3_transmissions.png}
+  \end{center}
+  \small Totalul transmisiilor pe marimi de retea.
+\end{frame}
+
+\begin{frame}{Rezultate (exemplu)}
+  \begin{itemize}
+    \item Flooding are delivery\_ratio mai mare, dar overhead mai ridicat.
+    \item Gossip reduce overhead, dar pierde din acoperire.
+    \item Packet loss afecteaza mai puternic gossip.
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \includegraphics[width=0.82\textwidth]{C:/Users/jalba/Desktop/RC/miniproiect/relay-network-simulator/results/plots/experiment4_overhead.png}
+  \end{center}
+  \small Overhead in topologii rare vs dense.
+\end{frame}
+
+\begin{frame}{Limitari si viitoare imbunatatiri}
+  \begin{itemize}
+    \item Model simplificat de trafic si topologii.
+    \item Nu exista mobilitate a nodurilor.
+    \item Extensii: protocoale hibride, optimizari adaptive, topologii reale.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Concluzii}
+  \begin{itemize}
+    \item Simulatorul ofera un cadru clar pentru compararea protocoalelor.
+    \item Rezultatele arata compromisuri intre acoperire si overhead.
+    \item Proiectul poate fi extins pentru scenarii mai realiste.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Intrebari}
+  \centering
+  \Large Multumesc!
+\end{frame}
+
+\end{document}

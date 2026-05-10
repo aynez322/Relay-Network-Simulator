@@ -1,0 +1,6 @@
+protocol,topology,node_count,loss_rate,delivery_ratio,total_transmissions,redundant_messages,average_hop_count,average_delay,network_overhead,packet_loss_impact,received_nodes,dropped_packets,successful_transmissions
+flooding,small_world,100,0.0,1.0,564,470,2.18,3.92,5.697,0.0,100,0,99
+gossip,small_world,100,0.0,0.89,198,74,2.61,4.11,2.247,0.0,89,0,88
+flooding,small_world,100,0.2,0.93,521,392,2.29,4.23,5.663,0.196,93,102,92
+gossip,small_world,100,0.2,0.74,177,58,2.79,4.48,2.39,0.203,74,36,73
+
